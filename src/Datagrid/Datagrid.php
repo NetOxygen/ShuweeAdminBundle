@@ -13,6 +13,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Wanjee\Shuwee\AdminBundle\Admin\AdminInterface;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Action\DatagridEntityAction;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Action\DatagridListAction;
+use Wanjee\Shuwee\AdminBundle\Datagrid\Action\DatagridListMassAction;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Field\DatagridField;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Filter\DatagridFilter;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Filter\Type\DatagridFilterTypeEntity;
@@ -34,6 +35,11 @@ class Datagrid implements DatagridInterface
     private $actions = [];
 
     /**
+     * @var array List of available mass actions for this datagrid
+     */
+    private $massActions = [];
+
+    /**
      * @var array List of available fields for this datagrid
      */
     private $fields = [];
@@ -52,6 +58,11 @@ class Datagrid implements DatagridInterface
      * @var array
      */
     private $options;
+
+    /**
+     * @var null | \Symfony\Component\Form\FormInterface
+     */
+    private $massActionsForm;
 
     /**
      * @var null | \Symfony\Component\Form\FormInterface
@@ -198,12 +209,40 @@ class Datagrid implements DatagridInterface
     }
 
     /**
+     * Add a mass action to the datagrid.
+     *
+     * @param string $name
+     * @param string $type A valid DatagridActionInterface implementation
+     * @param array $options List of options for the given DatagridActionInterface implementation
+     * @return DatagridInterface
+     */
+    public function addMassAction($type, $route, $options = [])
+    {
+        // instanciate new mass action object of given type
+        $action = new $type($route, $options);
+
+        $this->massActions[] = $action;
+
+        return $this;
+    }
+
+    /**
      * Return list of all fields configured for this datagrid
      */
     public function getListActions()
     {
         return array_filter($this->actions, function($action) {
             return $action instanceof DatagridListAction;
+        });
+    }
+
+    /**
+     * Return list of all mass actions for this datagrid
+     */
+    public function getListMassActions()
+    {
+        return array_filter($this->massActions, function($action) {
+            return $action instanceof DatagridListMassAction;
         });
     }
 
@@ -215,6 +254,25 @@ class Datagrid implements DatagridInterface
         return array_filter($this->actions, function($action) {
             return $action instanceof DatagridEntityAction;
         });
+    }
+
+    /**
+     * Get the form used for mass actions
+     *
+     * @param bool $reset Force rebuild ?
+     * @return null | \Symfony\Component\Form\FormInterface
+     */
+    public function getMassActionsForm($reset = false)
+    {
+        if (!$this->massActionsForm || $reset) {
+            if (empty($this->massActions)) {
+                return null;
+            }
+
+            $this->massActionsForm = $this->factory->create(FormType::class);
+        }
+
+        return $this->massActionsForm;
     }
 
     /**

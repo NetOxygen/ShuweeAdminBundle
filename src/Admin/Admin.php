@@ -68,6 +68,7 @@ abstract class Admin implements AdminInterface
     {
         $this->attachFields($datagrid);
         $this->attachActions($datagrid);
+        $this->attachMassActions($datagrid);
         $this->attachFilters($datagrid);
     }
 
@@ -168,6 +169,11 @@ abstract class Admin implements AdminInterface
      * @param \Wanjee\Shuwee\AdminBundle\Datagrid\DatagridInterface $datagrid
      */
     public function attachActions(DatagridInterface $datagrid) {}
+
+    /**
+     * @param \Wanjee\Shuwee\AdminBundle\Datagrid\DatagridInterface $datagrid
+     */
+    public function attachMassActions(DatagridInterface $datagrid) {}
 
     /**
      * {@inheritdoc}
