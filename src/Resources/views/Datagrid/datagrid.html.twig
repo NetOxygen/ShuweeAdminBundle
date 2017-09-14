@@ -50,7 +50,11 @@
                     <th>
                 {% endif %}
                 {% if field.getOption('sortable') %}
-                    {% set sort_field = 'e.' ~ field.name %}
+                    {% set sort_alias  = field.getOption('sort_alias') %}
+                    {% set sort_column = field.getOption('sort_column') %}
+                    {% set sort_field  = sort_alias and sort_column ?
+                           sort_alias ~ '.' ~ sort_column : 'e.' ~ field.name
+                    %}
                     {{ knp_pagination_sortable(datagrid.pagination, field.getOption('label') | trans({}, 'ShuweeAdminBundle'), sort_field) }}
                 {% else %}
                     {{ field.getOption('label') | trans({}, 'ShuweeAdminBundle') }}

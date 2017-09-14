@@ -454,6 +454,22 @@ class Datagrid implements DatagridInterface
             ->from($this->admin->getEntityClass(), 'e')
             ->orderBy('e.id', 'DESC');
 
+        /* Add linked entities to the query to enable sort on them */
+        $metadata = $this->entityManager->getClassMetadata($this->admin->getEntityClass());
+        if (!empty($metadata->associationMappings)) {
+            foreach ($this->fields as $field) {
+                $field_name = $field->getName();
+                if (!isset($metadata->associationMappings[$field_name])) {
+                    continue;
+                }
+                $sort_alias  = $field->getOption('sort_alias');
+                $sort_column = $field->getOption('sort_column');
+                if (!empty($sort_alias) && !empty($sort_column)) {
+                    $queryBuilder->leftJoin('e.'.$field_name, $field->getOption('sort_alias'));
+                }
+            }
+        }
+
         $expr = $queryBuilder->expr()->andX();
 
         /** @var DatagridFilter $filter */
