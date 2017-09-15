@@ -5,6 +5,8 @@ namespace Wanjee\Shuwee\AdminBundle\Datagrid\Field;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
+use Wanjee\Shuwee\AdminBundle\Datagrid\Datagrid;
+
 /**
  * Class DatagridField
  * @package Wanjee\Shuwee\AdminBundle\Datagrid\Field
@@ -44,8 +46,8 @@ class DatagridField implements DatagridFieldInterface
                 [
                     'label'        => ucfirst($name),
                     'sortable'     => false,
-                    'sort_alias'   => 'e',
-                    'sort_column'  => $name,
+                    'sort_alias'   => null,
+                    'sort_column'  => null,
                     'help'         => null,
                 ]
             )

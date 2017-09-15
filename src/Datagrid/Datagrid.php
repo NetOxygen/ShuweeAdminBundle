@@ -25,6 +25,11 @@ use Wanjee\Shuwee\AdminBundle\Datagrid\Filter\Type\DatagridFilterTypeEntity;
 class Datagrid implements DatagridInterface
 {
     /**
+     * @var string
+     */
+    const DEFAULT_ENTITY_ALIAS = 'e';
+
+    /**
      * @var \Wanjee\Shuwee\AdminBundle\Admin\Admin $admin
      */
     private $admin;
@@ -450,9 +455,9 @@ class Datagrid implements DatagridInterface
     {
         $queryBuilder = $this->entityManager->createQueryBuilder();
         $queryBuilder
-            ->select('e')
-            ->from($this->admin->getEntityClass(), 'e')
-            ->orderBy('e.id', 'DESC');
+            ->select(static::DEFAULT_ENTITY_ALIAS)
+            ->from($this->admin->getEntityClass(), static::DEFAULT_ENTITY_ALIAS)
+            ->orderBy(static::DEFAULT_ENTITY_ALIAS.'.id', 'DESC');
 
         /* Add linked entities to the query to enable sort on them */
         $metadata = $this->entityManager->getClassMetadata($this->admin->getEntityClass());
@@ -465,7 +470,7 @@ class Datagrid implements DatagridInterface
                 $sort_alias  = $field->getOption('sort_alias');
                 $sort_column = $field->getOption('sort_column');
                 if (!empty($sort_alias) && !empty($sort_column)) {
-                    $queryBuilder->leftJoin('e.'.$field_name, $field->getOption('sort_alias'));
+                    $queryBuilder->leftJoin(static::DEFAULT_ENTITY_ALIAS.'.'.$field_name, $sort_alias);
                 }
             }
         }
