@@ -10,7 +10,7 @@
 
 {% block datagrid_list_actions %}
     {%- for action in actions -%}
-        <a href="{{ path(action.route) }}" class="btn btn-sm btn-{{ action.getOption('btn-style') }} {{ action.getOption('classes') }}" type="button">
+        <a href="{{ path(action.route, {'filter': filters}) }}" class="btn btn-sm btn-{{ action.getOption('btn-style') }} {{ action.getOption('classes') }}" type="button">
             {%- if action.getOption('icon') -%}
                 <i class="glyphicon glyphicon-{{ action.getOption('icon') }}"></i>
             {%- endif %}

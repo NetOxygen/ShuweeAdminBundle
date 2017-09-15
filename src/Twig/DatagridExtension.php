@@ -69,11 +69,16 @@ class DatagridExtension extends \Twig_Extension
      */
     public function renderDatagridListActions(Twig_Environment $env, DatagridInterface $datagrid)
     {
+        $filters = [];
+        foreach ($datagrid->getFilters() as $filter) {
+            $filters[$filter->getName()] = $filter->getValue();
+        }
         return $this->render(
             $env,
             'datagrid_list_actions',
             [
-                'actions' => $datagrid->getListActions(),
+                'filters' => $filters,
+                'actions'  => $datagrid->getListActions(),
             ]
         );
     }
