@@ -1,17 +1,18 @@
 <?php
 
 namespace Wanjee\Shuwee\AdminBundle\Admin;
-
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Wanjee\Shuwee\AdminBundle\Datagrid\DatagridInterface;
+use Wanjee\Shuwee\AdminBundle\Datagrid\FilterableDatagridInterface;
 
 /**
- * Class AbstractAdmin
+ * Class Admin
  * @package Wanjee\Shuwee\AdminBundle\Admin
  */
-abstract class AbstractAdmin implements AdminInterface
+abstract class Admin implements AdminInterface
 {
     /**
      * List of global options
@@ -29,6 +30,19 @@ abstract class AbstractAdmin implements AdminInterface
      * Store setup state to avoid setting it up several times
      */
     protected $setup = false;
+
+    /**
+     * @var TokenStorage
+     */
+    protected $tokenStorage;
+
+    /**
+     * @param \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage $tokenStorage
+     */
+    public function setTokenStorage(TokenStorage $tokenStorage)
+    {
+        $this->tokenStorage = $tokenStorage;
+    }
 
     /**
      * This function is used to boot up Admin implementation when first used.
@@ -61,11 +75,16 @@ abstract class AbstractAdmin implements AdminInterface
     /**
      * @inheritDoc
      */
-    final public function buildDatagrid(DatagridInterface $datagrid)
+    final public function buildDatagrid(FilterableDatagridInterface $datagrid)
     {
         $this->attachFields($datagrid);
         $this->attachActions($datagrid);
+        $this->attachMassActions($datagrid);
         $this->attachFilters($datagrid);
+
+        if ($datagrid instanceof FilterableDatagridInterface) {
+            $this->attachOptionsQueryBuilder($datagrid);
+        }
     }
 
     /**
@@ -107,7 +126,7 @@ abstract class AbstractAdmin implements AdminInterface
                     'label' => ucfirst($this->getAlias()),
                     'description' => null,
                     'preview_url_callback' => null,
-                    'menu_section' => 'menu.default.section.label',
+                    'menu_section' => 'content',
                 ]
             )
             ->setAllowedTypes('label', ['string'])
@@ -167,6 +186,17 @@ abstract class AbstractAdmin implements AdminInterface
     public function attachActions(DatagridInterface $datagrid) {}
 
     /**
+     * @param \Wanjee\Shuwee\AdminBundle\Datagrid\DatagridInterface $datagrid
+     */
+    public function attachMassActions(DatagridInterface $datagrid) {}
+
+    /**
+     * Add optional parameters to datagrid
+     * @method attachOptionsQueryBuilder
+     */
+    public function attachOptionsQueryBuilder(FilterableDatagridInterface $datagrid) {}
+
+    /**
      * {@inheritdoc}
      */
     public function hasAccess(UserInterface $user, $action, $object = null)
@@ -205,8 +235,12 @@ abstract class AbstractAdmin implements AdminInterface
      */
     public function postRemove($entity) {}
 
-    /**
-     * {@inheritdoc}
-     */
-    public function preCreateFormRender($form) {}
+
+    public function getUser() {
+        return $this->tokenStorage->getToken()->getUser();
+    }
+
+    public function isGranted($role) {
+        return in_array($role, $this->getUser()->getRoles());
+    }
 }

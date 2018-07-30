@@ -452,3 +452,42 @@ They will not be visible if you disable the action column.  There is currently n
     ]
 );
 ```
+
+## Mass ations
+
+#### DatagridListMassAction
+
+Mass actions are additionnal functionality added at the bottom of the datagrid.
+If one mass action is defined, a column with a checkbox is prepended to
+each row.
+They will allow you to select entities and perform some action on them.
+
+In your admin controller define the datagrid mass actions as follow:
+
+``` php
+/**
+ * @inheritdoc
+ */
+public function attachMassActions(DatagridInterface $datagrid)
+{
+    $datagrid
+        ->addMassAction(
+            DatagridListMassAction::class,
+            'csv_export',
+            'mass_action_route_name',
+            [
+                'label'     => 'Do something with the selected entities',
+                'icon'      => 'export-file',
+                'btn-style' => 'primary',
+                'classes'   => 'my-mass-action-link',
+            ]
+        );
+}
+```
+
+### Shared options
+
+* *label*: Link label. Expects string. Required.
+* *icon*: Name of a bootstrap glyphicon.  Only the last part is needed. E.g.: use 'plus' to display 'glyphicon-plus'. See http://getbootstrap.com/components/#glyphicons.
+* *btn-style*: One of the available bootstrap btn style.  Only the last part is needed. E.g.: use 'primary' for 'btn-primary' style.  See http://getbootstrap.com/css/#buttons-options
+* *classes*: A string containing the classes of your choice that you want to add on the link.

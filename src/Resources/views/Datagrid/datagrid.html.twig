@@ -10,7 +10,7 @@
 
 {% block datagrid_list_actions %}
     {%- for action in actions -%}
-        <a href="{{ path(action.route) }}" class="btn btn-sm btn-{{ action.getOption('btn-style') }} {{ action.getOption('classes') }}" type="button">
+        <a href="{{ path(action.route, {'filter': filters}) }}" class="btn btn-sm btn-{{ action.getOption('btn-style') }} {{ action.getOption('classes') }}" type="button">
             {%- if action.getOption('icon') -%}
                 <i class="glyphicon glyphicon-{{ action.getOption('icon') }}"></i>
             {%- endif %}
@@ -19,10 +19,29 @@
     {%- endfor -%}
 {% endblock %}
 
+{% block datagrid_list_mass_actions %}
+    {%- for mass_action in mass_actions -%}
+        <button type="submit" onclick='this.form.action="{{ path(mass_action.route) }}"' name="mass_action[submit]" class="btn btn-sm btn-{{ mass_action.getOption('btn-style') }} {{ mass_action.getOption('classes') }}">
+            {%- if mass_action.getOption('icon') -%}
+                <i class="glyphicon glyphicon-{{ mass_action.getOption('icon') }}"></i>
+            {%- endif %}
+            {{ mass_action.getOption('label') -}}
+        </button>
+    {%- endfor -%}
+{% endblock %}
+
 {% block datagrid_table %}
+    {% if mass_actions %}
+        {{ form_start(mass_actions_form) }}
+    {% endif %}
     <table class="table table-striped table-hover datagrid">
         <thead>
         <tr>
+            {% if mass_actions %}
+            <td>
+                <input type="checkbox" id="check_em_all" onclick="$('.mass_action_cbx').prop('checked', $(this).prop('checked'))" />
+            </td>
+            {% endif %}
             {% for field in datagrid.fields %}
                 {% set help_text = field.getOption('help') %}
                 {% if help_text is not empty %}
@@ -31,7 +50,11 @@
                     <th>
                 {% endif %}
                 {% if field.getOption('sortable') %}
-                    {% set sort_field = 'e.' ~ field.name %}
+                    {% set sort_alias  = field.getOption('sort_alias') %}
+                    {% set sort_column = field.getOption('sort_column') %}
+                    {% set sort_field  = sort_alias and sort_column ?
+                           sort_alias ~ '.' ~ sort_column : 'e.' ~ field.name
+                    %}
                     {{ knp_pagination_sortable(datagrid.pagination, field.getOption('label') | trans({}, 'ShuweeAdminBundle'), sort_field) }}
                 {% else %}
                     {{ field.getOption('label') | trans({}, 'ShuweeAdminBundle') }}
@@ -46,6 +69,11 @@
         <tbody>
         {% for entity in datagrid.pagination %}
             <tr>
+                {% if mass_actions %}
+                <td>
+                    <input type="checkbox" class="mass_action_cbx" id="mass_action_cbx_{{ entity.id }}" name="mass_action[ids][]" value="{{ entity.id }}" />
+                </td>
+                {% endif %}
                 {% for field in datagrid.fields %}
                     <td>
                         {{ datagrid_field(datagrid, field, entity) }}
@@ -91,7 +119,20 @@
             </tr>
         {% endfor %}
         </tbody>
+        {% if mass_actions %}
+        <tfoot>
+            {% set size = datagrid.fields | length %}
+            <tr>
+                <td colspan="{% if datagrid.getOption('show_actions_column') %}{{ size + 1 }}{% else %}{{ size }}{% endif %}">
+                    {{ block('datagrid_list_mass_actions') }}
+                </td>
+            </tr>
+        </tfoot>
+        {% endif %}
     </table>
+    {% if mass_actions %}
+        {{ form_end(mass_actions_form, {'render_rest': false}) }}
+    {% endif %}
     {{ knp_pagination_render(datagrid.pagination) }}
 {% endblock %}
 

@@ -4,7 +4,7 @@ namespace Wanjee\Shuwee\AdminBundle\Admin;
 
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Wanjee\Shuwee\AdminBundle\Datagrid\DatagridInterface;
+use Wanjee\Shuwee\AdminBundle\Datagrid\FilterableDatagridInterface;
 
 /**
  * Interface AdminInterface
@@ -44,9 +44,9 @@ interface AdminInterface
     public function getOption($name, $default = null);
 
     /**
-     * @param \Wanjee\Shuwee\AdminBundle\Datagrid\DatagridInterface $datagrid
+     * @param \Wanjee\Shuwee\AdminBundle\Datagrid\FilterableDatagridInterface $datagrid
      */
-    public function buildDatagrid(DatagridInterface $datagrid);
+    public function buildDatagrid(FilterableDatagridInterface $datagrid);
 
     /**
      * @return array Options
@@ -100,9 +100,4 @@ interface AdminInterface
      * @param mixed $entity
      */
     public function postRemove($entity);
-
-    /**
-     * @param mixed $form
-     */
-    public function preCreateFormRender($form);
 }

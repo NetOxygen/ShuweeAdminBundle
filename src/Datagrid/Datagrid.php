@@ -10,9 +10,10 @@ use Symfony\Component\Form\FormFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Wanjee\Shuwee\AdminBundle\Admin\AbstractAdmin;
+use Wanjee\Shuwee\AdminBundle\Admin\Admin;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Action\DatagridEntityAction;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Action\DatagridListAction;
+use Wanjee\Shuwee\AdminBundle\Datagrid\Action\DatagridListMassAction;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Field\DatagridField;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Filter\DatagridFilter;
 use Wanjee\Shuwee\AdminBundle\Datagrid\Filter\Type\DatagridFilterTypeEntity;
@@ -24,7 +25,12 @@ use Wanjee\Shuwee\AdminBundle\Datagrid\Filter\Type\DatagridFilterTypeEntity;
 class Datagrid implements DatagridInterface
 {
     /**
-     * @var \Wanjee\Shuwee\AdminBundle\Admin\AbstractAdmin $admin
+     * @var string
+     */
+    const DEFAULT_ENTITY_ALIAS = 'e';
+
+    /**
+     * @var \Wanjee\Shuwee\AdminBundle\Admin\Admin $admin
      */
     private $admin;
 
@@ -32,6 +38,11 @@ class Datagrid implements DatagridInterface
      * @var array List of available actions for this datagrid
      */
     private $actions = [];
+
+    /**
+     * @var array List of available mass actions for this datagrid
+     */
+    private $massActions = [];
 
     /**
      * @var array List of available fields for this datagrid
@@ -52,6 +63,11 @@ class Datagrid implements DatagridInterface
      * @var array
      */
     private $options;
+
+    /**
+     * @var null | \Symfony\Component\Form\FormInterface
+     */
+    private $massActionsForm;
 
     /**
      * @var null | \Symfony\Component\Form\FormInterface
@@ -118,7 +134,7 @@ class Datagrid implements DatagridInterface
     }
 
     /**
-     * @return \Wanjee\Shuwee\AdminBundle\Admin\AbstractAdmin
+     * @return \Wanjee\Shuwee\AdminBundle\Admin\Admin
      */
     public function getAdmin()
     {
@@ -198,12 +214,40 @@ class Datagrid implements DatagridInterface
     }
 
     /**
+     * Add a mass action to the datagrid.
+     *
+     * @param string $name
+     * @param string $type A valid DatagridActionInterface implementation
+     * @param array $options List of options for the given DatagridActionInterface implementation
+     * @return DatagridInterface
+     */
+    public function addMassAction($type, $route, $options = [])
+    {
+        // instanciate new mass action object of given type
+        $action = new $type($route, $options);
+
+        $this->massActions[] = $action;
+
+        return $this;
+    }
+
+    /**
      * Return list of all fields configured for this datagrid
      */
     public function getListActions()
     {
         return array_filter($this->actions, function($action) {
             return $action instanceof DatagridListAction;
+        });
+    }
+
+    /**
+     * Return list of all mass actions for this datagrid
+     */
+    public function getListMassActions()
+    {
+        return array_filter($this->massActions, function($action) {
+            return $action instanceof DatagridListMassAction;
         });
     }
 
@@ -215,6 +259,25 @@ class Datagrid implements DatagridInterface
         return array_filter($this->actions, function($action) {
             return $action instanceof DatagridEntityAction;
         });
+    }
+
+    /**
+     * Get the form used for mass actions
+     *
+     * @param bool $reset Force rebuild ?
+     * @return null | \Symfony\Component\Form\FormInterface
+     */
+    public function getMassActionsForm($reset = false)
+    {
+        if (!$this->massActionsForm || $reset) {
+            if (empty($this->massActions)) {
+                return null;
+            }
+
+            $this->massActionsForm = $this->factory->create(FormType::class);
+        }
+
+        return $this->massActionsForm;
     }
 
     /**
@@ -239,7 +302,7 @@ class Datagrid implements DatagridInterface
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      */
-    public function bind(AbstractAdmin $admin, Request $request)
+    public function bind(Admin $admin, Request $request)
     {
         if ($this->request) {
             throw new \RuntimeException('A datagrid can only be bound once to a request');
@@ -392,9 +455,25 @@ class Datagrid implements DatagridInterface
     {
         $queryBuilder = $this->entityManager->createQueryBuilder();
         $queryBuilder
-            ->select('e')
-            ->from($this->admin->getEntityClass(), 'e')
-            ->orderBy('e.id', 'DESC');
+            ->select(static::DEFAULT_ENTITY_ALIAS)
+            ->from($this->admin->getEntityClass(), static::DEFAULT_ENTITY_ALIAS)
+            ->orderBy(static::DEFAULT_ENTITY_ALIAS.'.id', 'DESC');
+
+        /* Add linked entities to the query to enable sort on them */
+        $metadata = $this->entityManager->getClassMetadata($this->admin->getEntityClass());
+        if (!empty($metadata->associationMappings)) {
+            foreach ($this->fields as $field) {
+                $field_name = $field->getName();
+                if (!isset($metadata->associationMappings[$field_name])) {
+                    continue;
+                }
+                $sort_alias  = $field->getOption('sort_alias');
+                $sort_column = $field->getOption('sort_column');
+                if (!empty($sort_alias) && !empty($sort_column)) {
+                    $queryBuilder->leftJoin(static::DEFAULT_ENTITY_ALIAS.'.'.$field_name, $sort_alias);
+                }
+            }
+        }
 
         $expr = $queryBuilder->expr()->andX();
 

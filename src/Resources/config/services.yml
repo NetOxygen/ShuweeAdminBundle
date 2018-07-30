@@ -6,6 +6,8 @@ services:
     shuwee_admin.admin_abstract:
         class: Wanjee\Shuwee\AdminBundle\Admin\Admin
         abstract: true
+        calls:
+            - [setTokenStorage, ['@security.token_storage']]
 
     # UserAdmin
     shuwee_admin.user_admin_abstract:
@@ -55,7 +57,7 @@ services:
 
     # Datagrid
     shuwee_admin.datagrid:
-        class: Wanjee\Shuwee\AdminBundle\Datagrid\Datagrid
+        class: Wanjee\Shuwee\AdminBundle\Datagrid\FilterableDatagrid
         arguments: ['@knp_paginator', '@doctrine.orm.default_entity_manager', '@form.factory']
 
     # Security

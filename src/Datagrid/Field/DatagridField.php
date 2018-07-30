@@ -5,6 +5,8 @@ namespace Wanjee\Shuwee\AdminBundle\Datagrid\Field;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
+use Wanjee\Shuwee\AdminBundle\Datagrid\Datagrid;
+
 /**
  * Class DatagridField
  * @package Wanjee\Shuwee\AdminBundle\Datagrid\Field
@@ -42,13 +44,17 @@ class DatagridField implements DatagridFieldInterface
         $resolver
             ->setDefaults(
                 [
-                    'label' => ucfirst($name),
-                    'sortable' => false,
-                    'help' => null,
+                    'label'        => ucfirst($name),
+                    'sortable'     => false,
+                    'sort_alias'   => null,
+                    'sort_column'  => null,
+                    'help'         => null,
                 ]
             )
             ->setAllowedTypes('label', ['string'])
             ->setAllowedTypes('sortable', ['boolean'])
+            ->setAllowedTypes('sort_alias', ['null', 'string'])
+            ->setAllowedTypes('sort_column', ['null', 'string'])
             ->setAllowedTypes('help', ['null', 'string']);
 
         $type->configureOptions($resolver);

@@ -52,11 +52,14 @@ class DatagridExtension extends \Twig_Extension
      */
     public function renderDatagrid(Twig_Environment $env, DatagridInterface $datagrid)
     {
+        $mass_actions_form = $datagrid->getMassActionsForm();
         return $this->render(
             $env,
             'datagrid',
             [
-                'datagrid' => $datagrid,
+                'datagrid'          => $datagrid,
+                'mass_actions'      => $datagrid->getListMassActions(),
+                'mass_actions_form' => $mass_actions_form ? $mass_actions_form->createView() : null,
             ]
         );
     }
@@ -66,11 +69,16 @@ class DatagridExtension extends \Twig_Extension
      */
     public function renderDatagridListActions(Twig_Environment $env, DatagridInterface $datagrid)
     {
+        $filters = [];
+        foreach ($datagrid->getFilters() as $filter) {
+            $filters[$filter->getName()] = $filter->getValue();
+        }
         return $this->render(
             $env,
             'datagrid_list_actions',
             [
-                'actions' => $datagrid->getListActions(),
+                'filters' => $filters,
+                'actions'  => $datagrid->getListActions(),
             ]
         );
     }
