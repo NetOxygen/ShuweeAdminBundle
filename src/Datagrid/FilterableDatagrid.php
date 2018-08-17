@@ -34,16 +34,15 @@ class FilterableDatagrid extends Datagrid implements FilterableDatagridInterface
         $queryBuilder = parent::getQueryBuilder();
 
         if (!empty($this->additionnalParameters)) {
-            $parameters = [];
             foreach ($this->additionnalParameters as $field => $value) {
                 $query_key = static::DEFAULT_ENTITY_ALIAS.'.'.$field;
                 $parameter = ':__'. $field;
                 $queryBuilder->andWhere($queryBuilder->expr()->eq($query_key, $parameter));
-                $parameters[$parameter] = $value;
+                // $parameters[$parameter] = $value;
+                $queryBuilder->setParameter($parameter, $value);
             }
-            $queryBuilder->setParameters($parameters);
-        }
 
+        }
         // add $additionnalParameters if exists;
         return $queryBuilder;
     }

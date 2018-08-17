@@ -294,6 +294,7 @@ class Datagrid implements DatagridInterface
             );
         }
 
+
         return $this->pagination;
     }
 
